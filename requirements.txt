@@ -5,7 +5,6 @@ numpy
 lxml
 git+https://github.com/miurahr/pykakasi
 ifstools
-imageio_ffmpeg==0.4.2
 kbinxml
 pydub==0.24.0
 Pillow

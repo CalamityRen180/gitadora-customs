@@ -2,8 +2,6 @@ import platform
 import os
 import shutil
 
-import imageio_ffmpeg
-
 def is_wsl():
     return "microsoft" in platform.uname()[3].lower()
 
@@ -72,10 +70,30 @@ def romanize(text):
     new_text = conv.do(text)
     return new_text.upper() if text != new_text else text
 
-def check_ffmpeg():
-    if not os.path.exists("ffmpeg.exe"):
-        exe_path = imageio_ffmpeg.get_ffmpeg_exe()
-        ext = os.path.splitext(exe_path)[-1]
-        filename = "ffmpeg" + ext
+def _find_tool(candidates):
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return os.path.abspath(candidate)
 
-        shutil.copy(exe_path, filename)
+        resolved = shutil.which(candidate)
+        if resolved:
+            return resolved
+
+    return None
+
+def check_ffmpeg():
+    ffmpeg_path = _find_tool(["ffmpeg.exe", "ffmpeg"])
+    if not ffmpeg_path:
+        raise RuntimeError("Couldn't find ffmpeg. Install ffmpeg or add it to PATH.")
+
+    ffprobe_path = _find_tool(["ffprobe.exe", "ffprobe"])
+    if not ffprobe_path:
+        raise RuntimeError("Couldn't find ffprobe. Install ffmpeg or add it to PATH.")
+
+    import pydub
+
+    pydub.AudioSegment.converter = ffmpeg_path
+    pydub.AudioSegment.ffmpeg = ffmpeg_path
+    pydub.AudioSegment.ffprobe = ffprobe_path
+
+    return ffmpeg_path
